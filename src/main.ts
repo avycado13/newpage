@@ -1,7 +1,9 @@
 import "./style.css";
 
 // const API_KEY = import.meta.env.VITE_NASA_API_KEY;
-document.querySelector("#app").innerHTML = "<p>loading...</p>";
+const app = document.querySelector("#app");
+if (!app) throw new Error("Missing #app element");
+app.innerHTML = "<p>loading...</p>";
 
 // fetch(`https://api.nasa.gov/planetary/apod?api_key=${API_KEY}&date=${date}`)
 fetch("https://www.nasa.gov/feeds/iotd-feed/")
@@ -26,18 +28,20 @@ fetch("https://www.nasa.gov/feeds/iotd-feed/")
 				?.getAttribute("url"),
 		};
 		console.log(entry);
-		document.querySelector("#app").innerHTML = `
+		app.innerHTML = `
 				<button id="toggle-btn" style="position: fixed; top: 20px; right: 20px; z-index: 1000; padding: 10px 15px; border-radius: 8px; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); backdrop-filter: blur(5px); cursor: pointer;">Hide</button>
         <h1>${entry.title}</h1>
 				<h2>${new Date().toLocaleString("en-US", { year: "numeric", month: "long", day: "numeric" })}</h2>
 				<p>${entry.description}</p>
     `;
 		document.body.style.backgroundImage = `url(${entry.imageUrl})`;
-		// <img src="${entry.imageUrl}" />
+		// Keep the toggle outside #app so it remains usable when #app is hidden.
+		const toggleBtn = document.querySelector<HTMLButtonElement>("#toggle-btn");
+		if (toggleBtn) {
+			document.body.append(toggleBtn);
+			toggleBtn.addEventListener("click", () => {
+				const hidden = app.classList.toggle("hidden");
+				toggleBtn.textContent = hidden ? "Show" : "Hide";
+			});
+		}
 	});
-const toggleBtn = document.getElementById("toggle-btn");
-const app = document.getElementById("#app") || document.querySelector("#app");
-
-toggleBtn.addEventListener("click", () => {
-	app.classList.toggle("hidden");
-});
