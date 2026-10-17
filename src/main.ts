@@ -1,47 +1,101 @@
 import "./style.css";
 
-// const API_KEY = import.meta.env.VITE_NASA_API_KEY;
-const app = document.querySelector("#app");
-if (!app) throw new Error("Missing #app element");
-app.innerHTML = "<p>loading...</p>";
+const FEED_URL = "https://www.nasa.gov/feeds/iotd-feed/";
+function getApp(): HTMLElement {
+	const element = document.querySelector<HTMLElement>("#app");
+	if (!element) throw new Error("Missing #app element");
+	return element;
+}
 
-// fetch(`https://api.nasa.gov/planetary/apod?api_key=${API_KEY}&date=${date}`)
-fetch("https://www.nasa.gov/feeds/iotd-feed/")
-	.then((response) => response.text())
-	.then((xmlText) => {
-		const parser = new DOMParser();
-		const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-		const items = xmlDoc.getElementsByTagName("item");
+const app = getApp();
 
-		if (items.length === 0) {
-			console.log("No entries found.");
-		}
-		const latestItem = items[0];
-		const entry = {
-			title: latestItem.getElementsByTagName("title")[0]?.textContent,
-			link: latestItem.getElementsByTagName("link")[0]?.textContent,
-			pubDate: latestItem.getElementsByTagName("pubDate")[0]?.textContent,
-			description:
-				latestItem.getElementsByTagName("description")[0]?.textContent,
-			imageUrl: latestItem
-				.getElementsByTagName("enclosure")[0]
-				?.getAttribute("url"),
-		};
-		console.log(entry);
-		app.innerHTML = `
-				<button id="toggle-btn" style="position: fixed; top: 20px; right: 20px; z-index: 1000; padding: 10px 15px; border-radius: 8px; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); backdrop-filter: blur(5px); cursor: pointer;">Hide</button>
-        <h1>${entry.title}</h1>
-				<h2>${new Date().toLocaleString("en-US", { year: "numeric", month: "long", day: "numeric" })}</h2>
-				<p>${entry.description}</p>
-    `;
-		document.body.style.backgroundImage = `url(${entry.imageUrl})`;
-		// Keep the toggle outside #app so it remains usable when #app is hidden.
-		const toggleBtn = document.querySelector<HTMLButtonElement>("#toggle-btn");
-		if (toggleBtn) {
-			document.body.append(toggleBtn);
-			toggleBtn.addEventListener("click", () => {
-				const hidden = app.classList.toggle("hidden");
-				toggleBtn.textContent = hidden ? "Show" : "Hide";
-			});
-		}
-	});
+interface FeedEntry {
+	title: string;
+	description: string;
+	imageUrl: string | null;
+}
+
+function parseLatestEntry(xmlText: string): FeedEntry {
+	const xml = new DOMParser().parseFromString(xmlText, "text/xml");
+	if (xml.querySelector("parsererror")) throw new Error("Invalid NASA feed");
+
+	const item = xml.querySelector("item");
+	if (!item) throw new Error("NASA feed has no entries");
+
+	return {
+		title: item.querySelector("title")?.textContent?.trim() || "NASA Image of the Day",
+		description: item.querySelector("description")?.textContent?.trim() || "",
+		imageUrl: item.querySelector("enclosure")?.getAttribute("url") ?? null,
+	};
+}
+
+function renderEntry(entry: FeedEntry): void {
+	const title = document.createElement("h1");
+	title.textContent = entry.title;
+
+	const date = document.createElement("h2");
+	const updateClock = () => {
+		date.textContent = new Date().toLocaleString("en-US", {
+			year: "numeric",
+			month: "long",
+			day: "numeric",
+			hour: "numeric",
+			minute: "2-digit",
+			second: "2-digit",
+		});
+	};
+	updateClock();
+	setInterval(updateClock, 1000);
+
+	const description = document.createElement("p");
+	description.textContent = entry.description;
+
+	const search = document.createElement("form");
+	search.className = "search-form";
+	search.role = "search";
+	search.action = "https://duckduckgo.com/";
+	search.method = "get";
+	const input = document.createElement("input");
+	input.type = "search";
+	input.name = "q";
+	input.placeholder = "Search the web";
+	input.setAttribute("aria-label", "Search the web");
+	const submit = document.createElement("button");
+	submit.type = "submit";
+	submit.textContent = "Search";
+	search.append(input, submit);
+
+	app.replaceChildren(title, date, description, search);
+	if (entry.imageUrl) {
+		document.body.style.backgroundImage = `url(${JSON.stringify(entry.imageUrl)})`;
+	}
+}
+
+// Keep the toggle outside #app so it stays accessible while the content is hidden.
+const toggle = document.createElement("button");
+toggle.id = "toggle-btn";
+toggle.type = "button";
+toggle.textContent = "Hide";
+toggle.setAttribute("aria-controls", "app");
+toggle.addEventListener("click", () => {
+	const hidden = app.classList.toggle("hidden");
+	toggle.textContent = hidden ? "Show" : "Hide";
+	toggle.setAttribute("aria-expanded", String(!hidden));
+});
+
+toggle.setAttribute("aria-expanded", "true");
+app.textContent = "Loading...";
+
+async function loadFeed(): Promise<void> {
+	try {
+		const response = await fetch(FEED_URL);
+		if (!response.ok) throw new Error(`NASA feed returned ${response.status}`);
+		renderEntry(parseLatestEntry(await response.text()));
+		document.body.append(toggle);
+	} catch (error) {
+		console.error("Could not load NASA feed:", error);
+		app.textContent = "Could not load the NASA image. Please try again later.";
+	}
+}
+
+void loadFeed();

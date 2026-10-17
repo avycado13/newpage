@@ -1,58 +1,110 @@
 html,
 body {
 	margin: 0;
-	padding: 0;
-	width: 100%;
-	height: 100%;
-	background-color: #0b0b0e; /* Deep space fallback color while NASA feed loads */
+	min-height: 100%;
+	background-color: #0b0b0e;
 	color: #f0f4f8;
-	overflow-x: hidden;
 }
 
 body {
+	display: flex;
+	align-items: flex-end;
+	min-height: 100vh;
 	background-size: cover;
 	background-position: center;
 	background-repeat: no-repeat;
 	background-attachment: fixed;
-
-	display: flex;
-	justify-content: flex-start;
-	align-items: flex-end;
-	min-height: 100vh;
-
-	/* Creates a smooth crossfade animation when the image updates */
-	transition: background-image 0.8s ease-in-out;
 }
 
 #app {
-	/* Frosted Glassmorphism effect to protect contrast over raw images */
-	background: rgba(11, 11, 14, 0.65);
-	backdrop-filter: blur(16px);
-	-webkit-backdrop-filter: blur(16px);
-
-	/* Border aesthetics reflecting space tech instrumentation */
-	border: 1px solid rgba(255, 255, 255, 0.15);
-	border-radius: 20px;
-
-	/* Layout constraints */
+	box-sizing: border-box;
 	width: 90%;
 	max-width: 650px;
 	padding: 3rem 2.5rem;
-	box-sizing: border-box;
+	border: 1px solid rgba(255, 255, 255, 0.15);
+	border-radius: 20px;
+	background: rgba(11, 11, 14, 0.65);
 	box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+	backdrop-filter: blur(16px);
 }
+
 #app.hidden {
 	display: none;
 }
+
+#app .search-form {
+	display: flex;
+	gap: 0.5rem;
+	margin-top: 1.5rem;
+	padding: 0.4rem;
+	border: 1px solid rgba(255, 255, 255, 0.25);
+	border-radius: 12px;
+	background: rgba(0, 0, 0, 0.3);
+}
+
+#app .search-form:focus-within {
+	border-color: #9bdcff;
+	box-shadow: 0 0 0 3px rgba(155, 220, 255, 0.2);
+}
+
+#app .search-form input[type="search"] {
+	flex: 1;
+	min-width: 0;
+	margin: 0;
+	padding: 0.7rem 0.9rem;
+	border: 0;
+	border-radius: 8px;
+	outline: none;
+	background: transparent;
+	color: #f0f4f8;
+	font: inherit;
+}
+
+#app .search-form input[type="search"]::placeholder {
+	color: #c0cbd5;
+}
+
+#app .search-form button {
+	flex-shrink: 0;
+	margin: 0;
+	padding: 0.7rem 1.2rem;
+	border: 0;
+	border-radius: 8px;
+	background: #bde8ff;
+	color: #0b1b29;
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+#app .search-form button:hover {
+	background: #e1f5ff;
+}
+
+#app .search-form button:focus-visible {
+	outline: 2px solid #fff;
+	outline-offset: 2px;
+}
+
+#toggle-btn {
+	position: fixed;
+	top: 20px;
+	right: 20px;
+	z-index: 1000;
+	padding: 10px 15px;
+	border: 1px solid rgba(255, 255, 255, 0.4);
+	border-radius: 8px;
+	background: rgba(255, 255, 255, 0.2);
+	color: white;
+	backdrop-filter: blur(5px);
+	cursor: pointer;
+}
+
 @media (max-width: 600px) {
-	body::before,
-	body::after {
-		display: none;
-	}
 	#app {
-		width: 95%; /* Give it slightly more room horizontally */
-		max-width: 100%; /* Prevent any hard boundaries */
-		padding: 2rem 1.5rem; /* Reduce heavy padding so content has breathing room */
-		border-radius: 16px; /* Slightly soften the corners for smaller screens */
+		width: 95%;
+		max-width: 100%;
+		padding: 2rem 1.5rem;
+		border-radius: 16px;
 	}
 }
